@@ -9,6 +9,7 @@ on:
 permissions:
   contents: write
   actions: write
+  id-token: write  # Required for GitHub CLI authentication
 
 jobs:
   decompile:
@@ -55,6 +56,10 @@ jobs:
         mkdir -p ks-craft
         wget https://files.apkdlink.com/minecraft/minecraft-minecraft-apk-latest-october.apk \
           -O ks-craft/minecraft.apk
+        if [ $? -ne 0 ]; then
+          echo "Failed to download APK"
+          exit 1
+        fi
 
     # 7️⃣ Decompile APK
     - name: Decompile APK resources
@@ -62,6 +67,10 @@ jobs:
         rm -rf ks-craft/decompiled
         mkdir -p ks-craft/decompiled
         apktool d ks-craft/minecraft.apk -o ks-craft/decompiled -f
+        if [ $? -ne 0 ]; then
+          echo "Failed to decompile APK"
+          exit 1
+        fi
 
     # 8️⃣ Debug – list files
     - name: List decompiled files
@@ -82,4 +91,4 @@ jobs:
         git diff --cached --quiet && echo "No changes to commit" && exit 0
 
         git commit -m "Add decompiled Minecraft resources"
-        git push origin main   # 🔥 Push explicitly to main
+        git push origin main
