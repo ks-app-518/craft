@@ -1,4 +1,4 @@
-name: Decompile APK
+name: Decompile APK (Resources Only)
 
 on:
   push:
@@ -11,24 +11,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Checkout repository
+    # 1️⃣ Checkout repo
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # 2️⃣ Setup Java
+    # 2️⃣ Setup Java (apktool needs it)
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
         distribution: temurin
         java-version: '17'
 
-    # 3️⃣ Install basic dependencies
+    # 3️⃣ Install system tools
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y unzip wget
+        sudo apt-get install -y wget unzip
 
-    # 4️⃣ Install apktool (correct way)
+    # 4️⃣ Install apktool (correct & stable)
     - name: Install apktool
       run: |
         wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
@@ -37,50 +37,23 @@ jobs:
         sudo mv apktool /usr/local/bin/apktool
         sudo mv apktool_2.9.3.jar /usr/local/bin/apktool.jar
 
-    # 5️⃣ Install dex2jar (WORKING VERSION)
-    - name: Install dex2jar
-      run: |
-        wget https://github.com/pxb1988/dex2jar/releases/download/v2.3/dex2jar-2.3.zip
-        unzip dex2jar-2.3.zip
-        sudo mv dex2jar-2.3 /opt/dex2jar
-        sudo chmod +x /opt/dex2jar/*.sh
-        echo "/opt/dex2jar" >> $GITHUB_PATH
-
-    # 6️⃣ Install CFR
-    - name: Install CFR
-      run: |
-        wget https://www.benf.org/other/cfr/cfr-0.152.jar -O cfr.jar
-
-    # 7️⃣ Download APK
+    # 5️⃣ Download Minecraft APK
     - name: Download APK
       run: |
         mkdir -p ks-craft
         wget https://files.apkdlink.com/minecraft/minecraft-minecraft-apk-latest-october.apk \
         -O ks-craft/minecraft.apk
 
-    # 8️⃣ Decompile resources with apktool
-    - name: Decompile resources (apktool)
+    # 6️⃣ Decompile APK (FILES ONLY)
+    - name: Decompile APK resources
       run: |
         mkdir -p ks-craft/decompiled
         apktool d ks-craft/minecraft.apk \
-        -o ks-craft/decompiled/resources -f
+        -o ks-craft/decompiled -f
 
-    # 9️⃣ Convert DEX to JAR
-    - name: Convert DEX to JAR
-      run: |
-        d2j-dex2jar.sh ks-craft/minecraft.apk \
-        -o ks-craft/decompiled/minecraft.jar
-
-    # 🔟 Decompile Java source using CFR
-    - name: Decompile Java source (CFR)
-      run: |
-        mkdir -p ks-craft/decompiled/source
-        java -jar cfr.jar ks-craft/decompiled/minecraft.jar \
-        --outputdir ks-craft/decompiled/source
-
-    # 1️⃣1️⃣ Upload artifacts
+    # 7️⃣ Upload files
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: decompiled-files
-        path: ks-craft/
+        name: minecraft-files
+        path: ks-craft/decompiled/
