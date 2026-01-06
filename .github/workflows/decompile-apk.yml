@@ -6,58 +6,73 @@ on:
   pull_request:
     branches: [ main ]
 
+# ✅ Permissions (required for push)
+permissions:
+  actions: write
+  contents: write
+
 jobs:
   decompile:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Checkout repo
+    # 1️⃣ Checkout repo (with push permission)
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        persist-credentials: true
 
-    # 2️⃣ Setup Java (apktool needs it)
+    # 2️⃣ Setup Java
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
         distribution: temurin
         java-version: '17'
 
-    # 3️⃣ Install system tools
+    # 3️⃣ Install dependencies
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y wget unzip
 
-    # 4️⃣ Install apktool
+    # 4️⃣ Install apktool (CORRECT)
     - name: Install apktool
       run: |
-        wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
-        wget https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar
+        wget -O apktool https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
+        wget -O apktool.jar https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar
         chmod +x apktool
         sudo mv apktool /usr/local/bin/apktool
-        sudo mv apktool_2.9.3.jar /usr/local/bin/apktool.jar
+        sudo mv apktool.jar /usr/local/bin/apktool.jar
 
-    # 5️⃣ Download Minecraft APK
+    # 5️⃣ Verify apktool
+    - name: Verify apktool
+      run: |
+        apktool --version
+
+    # 6️⃣ Download Minecraft APK
     - name: Download APK
       run: |
         mkdir -p ks-craft
         wget https://files.apkdlink.com/minecraft/minecraft-minecraft-apk-latest-october.apk \
         -O ks-craft/minecraft.apk
 
-    # 6️⃣ Decompile APK (ALL FILES)
+    # 7️⃣ Decompile APK
     - name: Decompile APK resources
       run: |
-        apktool d ks-craft/minecraft.apk \
-        -o ks-craft/decompiled -f
+        mkdir -p ks-craft/decompiled
+        apktool d ks-craft/minecraft.apk -o ks-craft/decompiled -f
 
-    # 7️⃣ Debug (proof files exist)
-    - name: List ks-craft contents
+    # 8️⃣ Debug (proof)
+    - name: List files
       run: |
+        echo "===== ks-craft ====="
         ls -R ks-craft
 
-    # 8️⃣ Upload EVERYTHING inside ks-craft
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: ks-craft-all-files
-        path: ks-craft/
+    # 9️⃣ Commit decompiled files to repo
+    - name: Commit decompiled files to repo
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git add ks-craft/decompiled
+        git commit -m "Add decompiled Minecraft resources" || echo "No changes"
+        git push
