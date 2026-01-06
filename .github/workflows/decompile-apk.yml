@@ -9,7 +9,6 @@ on:
 permissions:
   contents: write
   actions: write
-  id-token: write  # Required for GitHub CLI authentication
 
 jobs:
   decompile:
@@ -61,24 +60,34 @@ jobs:
           exit 1
         fi
 
-    # 7️⃣ Decompile APK
+    # 7️⃣ Check APK integrity
+    - name: Check APK integrity
+      run: |
+        if [ ! -f ks-craft/minecraft.apk ]; then
+          echo "APK file does not exist"
+          exit 1
+        fi
+        echo "APK file exists"
+
+    # 8️⃣ Decompile APK
     - name: Decompile APK resources
       run: |
         rm -rf ks-craft/decompiled
         mkdir -p ks-craft/decompiled
-        apktool d ks-craft/minecraft.apk -o ks-craft/decompiled -f
+        apktool d ks-craft/minecraft.apk -o ks-craft/decompiled -f 2>&1 | tee apktool_output.log
         if [ $? -ne 0 ]; then
           echo "Failed to decompile APK"
+          cat apktool_output.log
           exit 1
         fi
 
-    # 8️⃣ Debug – list files
+    # 9️⃣ Debug – list files
     - name: List decompiled files
       run: |
         echo "===== ks-craft directory ====="
         ls -R ks-craft
 
-    # 9️⃣ Commit decompiled files to repo
+    # 🔟 Commit decompiled files to repo
     - name: Commit decompiled files to repo
       run: |
         git config user.name "github-actions[bot]"
