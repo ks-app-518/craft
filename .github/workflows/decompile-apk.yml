@@ -71,7 +71,6 @@ jobs:
 
     # 9️⃣ Commit decompiled files to repo
     - name: Commit decompiled files to repo
-      if: github.event_name == 'push'
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
