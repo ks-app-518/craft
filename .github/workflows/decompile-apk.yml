@@ -28,7 +28,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y wget unzip
 
-    # 4️⃣ Install apktool (correct & stable)
+    # 4️⃣ Install apktool
     - name: Install apktool
       run: |
         wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
@@ -44,16 +44,20 @@ jobs:
         wget https://files.apkdlink.com/minecraft/minecraft-minecraft-apk-latest-october.apk \
         -O ks-craft/minecraft.apk
 
-    # 6️⃣ Decompile APK (FILES ONLY)
+    # 6️⃣ Decompile APK (ALL FILES)
     - name: Decompile APK resources
       run: |
-        mkdir -p ks-craft/decompiled
         apktool d ks-craft/minecraft.apk \
         -o ks-craft/decompiled -f
 
-    # 7️⃣ Upload files
+    # 7️⃣ Debug (proof files exist)
+    - name: List ks-craft contents
+      run: |
+        ls -R ks-craft
+
+    # 8️⃣ Upload EVERYTHING inside ks-craft
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: minecraft-files
-        path: ks-craft/decompiled/
+        name: ks-craft-all-files
+        path: ks-craft/
